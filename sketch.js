@@ -43,16 +43,35 @@ function DNA() {
 function Population() {
   this.rockets = [];
   this.popsize = 25;
+  this.matingPool = [];
 
   for (var i = 0; i < this.popsize; i++) {
     this.rockets[i] = new Rocket();
   }
 
   this.evaluate = function() {
+    var maxfit = 0; //target
     for (var i = 0; i < this.popsize; i++) {
-      
+      this.rockets[i].calcFitness();
+
+      if (this.rockets[i].fitness > maxfit) {
+        maxfit = this.rockets[i].fitness;
+      }
+    }
+
+    for (var i=0; i < this.popsize; i++) {
+      this.rockets[i].fitness /= maxfit; //fitness/maxfit
+    }
+
+    this.matingPool = [];
+    for (var i = 0; i < this.popsize; i++) {
+      var mp = this.rockets[i].fitness * 100;
+      for (var j = 0; j < mp; j++) { //add to mating pool mp times
+        this.matingPool.add(this.rockets[i]);
+      }
     }
   }
+
 
 
   this.run = function() {
@@ -69,9 +88,16 @@ function Rocket(){
   this.vel = createVector();
   this.acc = createVector();
   this.dna = new DNA();
+  this.fitness = 0;
 
   this.applyForce = function(force) {
     this.acc.add(force); //adicionar para movimento
+  }
+
+  this.calcFitness = function() {
+    //closer to target, best fitness
+    var dist = dist(this.pos.x, this.pos.y, target.x, target.y);
+    this.fitness = 1/dist; //dist=100 -> fitness = 0,1
   }
 
   this.update = function() {

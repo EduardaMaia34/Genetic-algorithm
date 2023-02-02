@@ -1,5 +1,5 @@
 var target;
-var rocket;
+var population;
 var lifespan = 200;
 var count = 0;
 var lifeP;
@@ -7,7 +7,7 @@ var lifeP;
 function setup() {
     createCanvas(500,600);
     target = createVector(width/2, 40);
-    rocket = new Rocket();
+    population = new Population();
     lifeP = createP();
 }
 
@@ -17,11 +17,32 @@ function draw() {
     count++;
     lifeP.html(count);
     
-    rocket.show();
-    rocket.updateMov();
+    population.run();
+
+    if (count > lifespan) {
+        count = 0;
+        population = new Population();
+        population.run();
+    }
 
     fill(color("green"));
     square(target.x, target.y, 20);
+}
+
+function Population() {
+    this.rockets = [];
+    this.popsize = 20;
+
+    for (var i = 0; i < this.popsize; i++) {
+        this.rockets[i] = new Rocket();
+    }
+
+    this.run = function() {
+        for (var i = 0; i < this.popsize; i++) {
+            this.rockets[i].updateMov();
+            this.rockets[i].show();
+        }
+    }
 }
 
 function Rocket(dna) {

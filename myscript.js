@@ -1,8 +1,16 @@
 var target;
 var population;
-var lifespan = 200;
+var lifespan = 400;
 var count = 0;
-var lifeP, maxFitP, compNumP;
+var maxforce = 0.2;
+var lifeP, maxFitP;
+var rx = 125;
+var ry = 350;
+var rw = 250;
+var rh = 10;
+
+//experiment
+var deaths = 0;
 
 function setup() {
     createCanvas(500,600);
@@ -10,7 +18,6 @@ function setup() {
     population = new Population();
     lifeP = createP();
     maxFitP = createP();
-    compNumP = createP();
 }
 
 function draw() {
@@ -29,6 +36,8 @@ function draw() {
 
     fill(color("green"));
     square(target.x, target.y, 20);
+    fill(color("white"));
+    rect(125, 350, 250, 10);
 }
 
 function Population() {
@@ -93,7 +102,7 @@ function Rocket(dna) {
     this.vel = createVector();
     this.fitness = 0;
     this.completed = false;
-    this.compNum = 0;
+    this.crashed = false;
 
     if (dna) {
         this.dna = dna;
@@ -105,26 +114,48 @@ function Rocket(dna) {
     this.applyForce = function(force) {
         this.acc.add(force);
     }
+
     this.updateMov = function() {
         var distance = dist(this.pos.x, this.pos.y, target.x, target.y);
         if (distance < 25) {
             this.completed = true;
             this.pos = target.copy();
-            this.compNum += 1;
-            compNumP.html(this.compNum);
+        }
+
+        //crashed situations
+        if (this.pos.x > rx && this.pos.x < rx + rw && this.pos.y > ry && this.pos.y < ry + rh){
+            this.crashed = true;
+            deaths += 1;
+        }
+        if (this.pos.x > width || this.pos.x < 0 || this.pos.y < 0 || this.pos.y > height){
+            this.crashed = true;
+            deaths += 1;
         }
 
         this.applyForce(this.dna.genes[count]);
+        if (!this.completed && !this.crashed) {
+            this.vel.add(this.acc);
+            this.pos.add(this.vel);
+            this.acc.mult(0);
+        }
 
-        this.vel.add(this.acc);
-        this.pos.add(this.vel);
-        this.acc.mult(0);
+        //experiment
+        if (deaths == popsize){
+            count = lifespan;
+        }
     }
 
     //genetic algorithm
     this.calcFitness = function(){
         var distance = dist(this.pos.x, this.pos.y, target.x, target.y);
         this.fitness = map(distance, 0, width, width, 0);
+
+        if (this.completed){
+            this.fitness *= 5;
+        }
+        if (this.crashed) {
+            this.fitness *= 0.5;
+        }
     }
 
     this.show = function() {
@@ -144,7 +175,7 @@ function DNA(genes){
         this.genes = [];
         for (var i = 0; i < lifespan; i++){
             this.genes[i] = p5.Vector.random2D();
-            this.genes[i].setMag(0.5);
+            this.genes[i].setMag(maxforce);
         }
     }
 
@@ -167,7 +198,7 @@ function DNA(genes){
         for (var i = 0; i < this.genes.length; i++){
             if (random(1) < 0.01){
                 this.genes[i] = p5.Vector.random2D();
-                this.genes[i].setMag(0.5);
+                this.genes[i].setMag(maxforce);
             }
         }
     }
